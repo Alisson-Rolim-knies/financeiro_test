@@ -21,8 +21,9 @@ function Router() {
     }
     
     // If logged in and on login page, redirect directly to main app
+    // Usando a rota '/app' que redirecionará para visiocar.html no servidor
     if (isLoggedIn && (location === '/login' || location === '/')) {
-      window.location.href = '/visiocar.html';
+      window.location.href = '/app';
     }
   }, [location, setLocation]);
 
