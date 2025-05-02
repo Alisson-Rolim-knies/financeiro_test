@@ -1164,88 +1164,101 @@
       if (dailyExpenses) dailyExpenses.textContent = `R$ ${despesasHoje.toFixed(2)}`;
     
       // Atualizar gráfico de receitas vs. despesas
-      const ctx = document.getElementById('revenueChart').getContext('2d');
-      
-      // Agrupar dados por mês para o gráfico
-      const datasAgrupadas = {};
-      
-      estado.inspecoes.forEach(insp => {
-        const data = new Date(insp.data);
-        const chave = `${data.getMonth()+1}/${data.getFullYear()}`;
+      try {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
         
-        if (!datasAgrupadas[chave]) {
-          datasAgrupadas[chave] = { receitas: 0, despesas: 0 };
-        }
+        // Agrupar dados por mês para o gráfico
+        const datasAgrupadas = {};
         
-        datasAgrupadas[chave].receitas += insp.valor;
-      });
-      
-      estado.despesas.forEach(desp => {
-        const data = new Date(desp.data);
-        const chave = `${data.getMonth()+1}/${data.getFullYear()}`;
-        
-        if (!datasAgrupadas[chave]) {
-          datasAgrupadas[chave] = { receitas: 0, despesas: 0 };
-        }
-        
-        datasAgrupadas[chave].despesas += desp.valor;
-      });
-      
-      const labels = Object.keys(datasAgrupadas).sort((a, b) => {
-        const [mesA, anoA] = a.split('/');
-        const [mesB, anoB] = b.split('/');
-        return new Date(anoA, mesA-1) - new Date(anoB, mesB-1);
-      });
-      
-      const receitasData = labels.map(label => datasAgrupadas[label].receitas);
-      const despesasData = labels.map(label => datasAgrupadas[label].despesas);
-      
-      // Destruir gráfico existente se houver
-      if (window.revenueChart) {
-        window.revenueChart.destroy();
-      }
-      
-      window.revenueChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'Receitas',
-              data: receitasData,
-              backgroundColor: '#ff6b00',
-              borderColor: '#ff6b00',
-              borderWidth: 1
-            },
-            {
-              label: 'Despesas',
-              data: despesasData,
-              backgroundColor: '#dc3545',
-              borderColor: '#dc3545',
-              borderWidth: 1
+        estado.inspecoes.forEach(insp => {
+          try {
+            const data = new Date(insp.data);
+            const chave = `${data.getMonth()+1}/${data.getFullYear()}`;
+            
+            if (!datasAgrupadas[chave]) {
+              datasAgrupadas[chave] = { receitas: 0, despesas: 0 };
             }
-          ]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(value) {
-                  return 'R$ ' + value;
+            
+            datasAgrupadas[chave].receitas += insp.valor;
+          } catch (e) {
+            console.error('Erro ao processar inspeção:', e);
+          }
+        });
+        
+        estado.despesas.forEach(desp => {
+          try {
+            const data = new Date(desp.data);
+            const chave = `${data.getMonth()+1}/${data.getFullYear()}`;
+            
+            if (!datasAgrupadas[chave]) {
+              datasAgrupadas[chave] = { receitas: 0, despesas: 0 };
+            }
+            
+            datasAgrupadas[chave].despesas += desp.valor;
+          } catch (e) {
+            console.error('Erro ao processar despesa:', e);
+          }
+        });
+        
+        const labels = Object.keys(datasAgrupadas).sort((a, b) => {
+          const [mesA, anoA] = a.split('/');
+          const [mesB, anoB] = b.split('/');
+          return new Date(anoA, mesA-1) - new Date(anoB, mesB-1);
+        });
+        
+        const receitasData = labels.map(label => datasAgrupadas[label].receitas);
+        const despesasData = labels.map(label => datasAgrupadas[label].despesas);
+        
+        // Destruir gráfico existente se houver
+        if (window.revenueChart && typeof window.revenueChart.destroy === 'function') {
+          window.revenueChart.destroy();
+        }
+        
+        // Criar novo gráfico
+        window.revenueChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Receitas',
+                data: receitasData,
+                backgroundColor: '#ff6b00',
+                borderColor: '#ff6b00',
+                borderWidth: 1
+              },
+              {
+                label: 'Despesas',
+                data: despesasData,
+                backgroundColor: '#dc3545',
+                borderColor: '#dc3545',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return 'R$ ' + value;
+                  }
                 }
               }
-            }
-          },
-          plugins: {
-            title: {
-              display: true,
-              text: 'Receitas vs. Despesas por Mês'
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: 'Receitas vs. Despesas por Mês'
+              }
             }
           }
-        }
-      });
+        });
+      } catch (e) {
+        console.error('Erro ao criar gráfico:', e);
+      }
     }
     
     // Funções do formulário de inspeção
