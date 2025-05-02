@@ -10,9 +10,9 @@ export default function Login() {
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('visiocarLoggedIn') === 'true';
     if (isLoggedIn) {
-      setLocation('/dashboard');
+      window.location.href = '/visiocar.html';
     }
-  }, [setLocation]);
+  }, []);
 
   const handleLogin = (password: string) => {
     if (password === 'visiocar') {
@@ -21,7 +21,7 @@ export default function Login() {
       
       // Redirect after successful login (500ms delay for animation)
       setTimeout(() => {
-        setLocation('/dashboard');
+        window.location.href = '/visiocar.html';
       }, 500);
       
       return true;

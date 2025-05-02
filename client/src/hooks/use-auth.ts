@@ -6,6 +6,8 @@ export function useAuth() {
   const login = (password: string): boolean => {
     if (password === 'visiocar') {
       localStorage.setItem('visiocarLoggedIn', 'true');
+      // Redirecionar diretamente para o aplicativo principal
+      window.location.href = '/visiocar.html';
       return true;
     }
     return false;

@@ -20,9 +20,9 @@ function Router() {
       setLocation('/login');
     }
     
-    // If logged in and on login page, redirect to dashboard
+    // If logged in and on login page, redirect directly to main app
     if (isLoggedIn && (location === '/login' || location === '/')) {
-      setLocation('/dashboard');
+      window.location.href = '/visiocar.html';
     }
   }, [location, setLocation]);
 
@@ -30,7 +30,6 @@ function Router() {
     <Switch>
       <Route path="/" component={Login} />
       <Route path="/login" component={Login} />
-      <Route path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );
