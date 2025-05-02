@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "buildCommand": "./vercel-build.sh",
+  "outputDirectory": "dist",
+  "builds": [
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/visiocar.html",
+      "dest": "/public/visiocar.html"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.ts"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
