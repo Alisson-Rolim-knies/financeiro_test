@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VisioCar - Gestão Financeira</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+  <button class="menu-toggle" onclick="toggleMenu()">
+    <i class="fas fa-bars"></i>
+  </button>
+  <div class="container">
+    <nav class="sidebar">
+      <div class="logo">VisioCar</div>
+      <ul>
+        <li><a href="#" class="active" data-page="dashboard"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="#" data-page="inspecoes"><i class="fas fa-car"></i> Inspeções</a></li>
+        <li><a href="#" data-page="depositos"><i class="fas fa-money-bill"></i> Depósitos</a></li>
+        <li><a href="#" data-page="despesas"><i class="fas fa-receipt"></i> Despesas</a></li>
+        <li><a href="#" data-page="vistorias-dia"><i class="fas fa-calendar-day"></i> Vistorias do Dia</a></li>
+        <li><a href="#" data-page="relatorios"><i class="fas fa-file-alt"></i> Relatórios</a></li>
+      </ul>
+    </nav>
+
+    <main class="content">
+      <div id="dashboard" class="page active">
+        <h1>Dashboard</h1>
+        <div class="cards">
+          <div class="card">
+            <h3>Receitas</h3>
+            <p class="value">R$ 0,00</p>
+          </div>
+          <div class="card">
+            <h3>Despesas</h3>
+            <p class="value">R$ 0,00</p>
+          </div>
+          <div class="card">
+            <h3>Lucro</h3>
+            <p class="value">R$ 0,00</p>
+          </div>
+          <div class="card">
+            <h3>Inspeções</h3>
+            <p class="value">0</p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+
+      <div id="inspecoes" class="page">
+        <h1>Inspeções</h1>
+        <button class="btn-primary" onclick="showModal('modal-inspecao')">Nova Inspeção</button>
+        <div class="table-container">
+          <table id="tabelaInspecoes">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Placa</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Pagamento</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="depositos" class="page">
+        <h1>Depósitos</h1>
+        <button class="btn-primary" onclick="showModal('modal-deposito')">Novo Depósito</button>
+        <div class="table-container">
+          <table id="tabelaDepositos">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Observações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="despesas" class="page">
+        <h1>Despesas</h1>
+        <button class="btn-primary" onclick="showModal('modal-despesa')">Nova Despesa</button>
+        <div class="table-container">
+          <table id="tabelaDespesas">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Observações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="vistorias-dia" class="page">
+        <h1>Vistorias do Dia</h1>
+        <button class="btn-primary" onclick="exportarVistoriasDoDia()">
+          <i class="fas fa-file-pdf"></i> Exportar Vistorias do Dia
+        </button>
+        <div class="table-container">
+          <table id="tabelaVistoriasDia">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Placa</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Pagamento</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="relatorios" class="page">
+        <div class="report-header">
+          <h1>Relatórios</h1>
+          <div class="report-actions">
+            <button class="btn-modern" onclick="exportarRelatorioCompleto()">
+              <i class="fas fa-file-pdf"></i>
+              <span>Exportar Relatório</span>
+            </button>
+            <button class="btn-modern danger" onclick="limparDados()">
+              <i class="fas fa-trash"></i>
+              <span>Limpar Dados</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="report-dashboard">
+          <div class="report-section daily-summary">
+            <div class="section-header">
+              <h2><i class="fas fa-calendar-day"></i> Resumo do Dia</h2>
+              <span class="date-display"></span>
+            </div>
+            
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-car"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Vistorias</h3>
+                  <p id="daily-inspections">0</p>
+                </div>
+              </div>
+              
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>PIX</h3>
+                  <p id="daily-pix">R$ 0,00</p>
+                </div>
+              </div>
+              
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Dinheiro</h3>
+                  <p id="daily-cash">R$ 0,00</p>
+                </div>
+              </div>
+              
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-university"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Depositado</h3>
+                  <p id="daily-deposited">R$ 0,00</p>
+                </div>
+              </div>
+              
+              <div class="metric-card highlight">
+                <div class="metric-icon">
+                  <i class="fas fa-calculator"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Falta Depositar</h3>
+                  <p id="daily-pending">R$ 0,00</p>
+                </div>
+              </div>
+              
+              <div class="metric-card alert">
+                <div class="metric-icon">
+                  <i class="fas fa-receipt"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Despesas</h3>
+                  <p id="daily-expenses">R$ 0,00</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal de Inspeção -->
+  <div id="modal-inspecao" class="modal">
+    <div class="modal-content">
+      <h2>Nova Inspeção</h2>
+      <form id="formInspecao">
+        <div class="form-group">
+          <label>Placa</label>
+          <input type="text" name="placa" required>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Veículo</label>
+          <select name="tipo" required onchange="atualizarValor()">
+            <option value="moto">Moto - R$ 190</option>
+            <option value="carro">Carro - R$ 230</option>
+            <option value="caminhao">Caminhão - R$ 280</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Método de Pagamento</label>
+          <select name="pagamento" required onchange="togglePagamentoMisto()">
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="misto">Misto</option>
+          </select>
+        </div>
+        <div id="valores-misto" style="display: none">
+          <div class="form-group">
+            <label>Valor em PIX</label>
+            <input type="number" name="valor_pix" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Valor em Dinheiro</label>
+            <input type="number" name="valor_dinheiro" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea name="observacoes"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" class="btn-secondary" onclick="hideModal('modal-inspecao')">Fechar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Depósito -->
+  <div id="modal-deposito" class="modal">
+    <div class="modal-content">
+      <h2>Novo Depósito</h2>
+      <form id="formDeposito">
+        <div class="form-group">
+          <label>Valor</label>
+          <input type="number" name="valor" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" name="data" required>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea name="observacoes"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" class="btn-secondary" onclick="hideModal('modal-deposito')">Fechar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Despesa -->
+  <div id="modal-despesa" class="modal">
+    <div class="modal-content">
+      <h2>Nova Despesa</h2>
+      <form id="formDespesa">
+        <div class="form-group">
+          <label>Valor</label>
+          <input type="number" name="valor" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea name="observacoes"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" class="btn-secondary" onclick="hideModal('modal-despesa')">Fechar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
