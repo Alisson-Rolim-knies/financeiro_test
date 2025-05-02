@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VisioCar - Gestão Financeira</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #ff6b00;
+      --secondary: #333;
+      --background: #f8f9fa;
+      --danger: #dc3545;
+      --sidebar-width: 250px;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--background);
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    @media (min-width: 768px) {
+      .container {
+        flex-direction: row;
+      }
+    }
+    
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--primary);
+      cursor: pointer;
+      padding: 10px;
+    }
+    
+    @media (max-width: 767px) {
+      .menu-toggle {
+        display: block;
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 1001;
+      }
+      
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        height: 100vh;
+        width: 80%;
+        max-width: 300px;
+        transition: left 0.3s ease;
+        z-index: 1000;
+      }
+      
+      .sidebar.active {
+        left: 0;
+      }
+    }
+    
+    .sidebar {
+      width: 100%;
+      background: white;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    @media (min-width: 768px) {
+      .sidebar {
+        width: var(--sidebar-width);
+        padding: 20px;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      }
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 30px;
+    }
+    
+    .sidebar ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    
+    @media (min-width: 768px) {
+      .sidebar ul {
+        display: block;
+      }
+    }
+    
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      color: var(--secondary);
+      text-decoration: none;
+      border-radius: 5px;
+      margin-bottom: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    @media (min-width: 768px) {
+      .sidebar a {
+        padding: 12px 15px;
+        font-size: 16px;
+      }
+    }
+    
+    
+    .sidebar a:hover {
+      background: rgba(255, 107, 0, 0.1);
+    }
+    
+    .sidebar a.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .sidebar i {
+      width: 20px;
+      text-align: center;
+    }
+    
+    .content {
+      flex: 1;
+      padding: 15px;
+      overflow-x: hidden;
+    }
+    
+    @media (min-width: 768px) {
+      .content {
+        padding: 30px;
+      }
+    }
+    
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    @media (min-width: 576px) {
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (min-width: 992px) {
+      .cards {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+      }
+    }
+    
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .card h3 {
+      color: var(--secondary);
+      margin-bottom: 10px;
+    }
+    
+    .card .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    
+    .card.alert .value {
+      color: var(--danger);
+    }
+    
+    .chart-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .page {
+      display: none;
+    }
+    
+    .page.active {
+      display: block;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      background: #e65c00;
+    }
+    
+    .table-container {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -15px;
+    }
+    
+    @media (min-width: 768px) {
+      .table-container {
+        margin: 0;
+        padding: 20px;
+      }
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    
+    th {
+      color: var(--secondary);
+      font-weight: bold;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      background: white;
+      width: 95%;
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    
+    @media (min-width: 768px) {
+      .modal-content {
+        width: 90%;
+        margin: 50px auto;
+        padding: 20px;
+      }
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--secondary);
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .form-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    @media (min-width: 576px) {
+      .form-actions {
+        flex-direction: row;
+        justify-content: flex-end;
+      }
+    }
+    
+    .form-actions button {
+      width: 100%;
+    }
+    
+    @media (min-width: 576px) {
+      .form-actions button {
+        width: auto;
+      }
+    }
+    
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    .btn-secondary:hover {
+      background: #222;
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: background 0.3s ease;
+    }
+    
+    .btn-danger:hover {
+      background: #c82333;
+    }
+    
+    .report-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    @media (min-width: 768px) {
+      .report-actions {
+        flex-direction: row;
+      }
+    }
+    
+    .btn-action {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 5px;
+      margin: 0 2px;
+      color: var(--primary);
+    }
+    
+    .btn-action.btn-delete {
+      color: var(--danger);
+    }
+    
+    .btn-action:hover {
+      opacity: 0.8;
+    }
+    
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .report-dashboard {
+      background: #f8f9fa;
+      border-radius: 15px;
+      padding: 1.5rem;
+    }
+    
+    .report-section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .section-header h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.25rem;
+      color: #2c3e50;
+    }
+    
+    .date-display {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    
+    .metric-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid #eee;
+    }
+    
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .metric-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    
+    .metric-info {
+      flex: 1;
+    }
+    
+    .metric-info h3 {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+    
+    .metric-info p {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #2c3e50;
+      margin: 0;
+    }
+    
+    .metric-card.highlight .metric-icon {
+      background: #3498db;
+    }
+    
+    .metric-card.alert .metric-icon {
+      background: var(--danger);
+    }
+    
+    .btn-modern {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+    }
+    
+    .btn-modern:hover {
+      transform: translateY(-1px);
+      background: #e65c00;
+    }
+    
+    .btn-modern.danger {
+      background: var(--danger);
+    }
+    
+    .btn-modern.danger:hover {
+      background: #bd2130;
+    }
+    
+    .logout-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      z-index: 100;
+    }
+    
+    .logout-button:hover {
+      background-color: #e65c00;
+    }
+    
+    /* Animação de desvanecer */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    .animate-shake {
+      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    }
+  </style>
+</head>
+
+<body>
+  <button class="logout-button" onclick="logout()">
+    <i class="fas fa-sign-out-alt"></i> Sair
+  </button>
+  <button class="menu-toggle" onclick="toggleMenu()">
+    <i class="fas fa-bars"></i>
+  </button>
+  <div class="container">
+    <nav class="sidebar">
+      <div class="logo">VisioCar</div>
+      <ul>
+        <li><a href="#" class="active" data-page="dashboard"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="#" data-page="inspecoes"><i class="fas fa-car"></i> Inspeções</a></li>
+        <li><a href="#" data-page="depositos"><i class="fas fa-money-bill"></i> Depósitos</a></li>
+        <li><a href="#" data-page="despesas"><i class="fas fa-receipt"></i> Despesas</a></li>
+        <li><a href="#" data-page="vistorias-dia"><i class="fas fa-calendar-day"></i> Vistorias do Dia</a></li>
+        <li><a href="#" data-page="relatorios"><i class="fas fa-file-alt"></i> Relatórios</a></li>
+      </ul>
+    </nav>
+
+    <main class="content">
+      <div id="dashboard" class="page active">
+        <h1>Dashboard</h1>
+        <div class="cards">
+          <div class="card">
+            <h3>Receitas</h3>
+            <p class="value">R$ 0,00</p>
+          </div>
+          <div class="card">
+            <h3>Despesas</h3>
+            <p class="value">R$ 0,00</p>
+          </div>
+          <div class="card">
+            <h3>Lucro</h3>
+            <p class="value">R$ 0,00</p>
+          </div>
+          <div class="card">
+            <h3>Inspeções</h3>
+            <p class="value">0</p>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+
+      <div id="inspecoes" class="page">
+        <h1>Inspeções</h1>
+        <button class="btn-primary" onclick="showModal('modal-inspecao')">Nova Inspeção</button>
+        <div class="table-container">
+          <table id="tabelaInspecoes">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Placa</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Pagamento</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="depositos" class="page">
+        <h1>Depósitos</h1>
+        <button class="btn-primary" onclick="showModal('modal-deposito')">Novo Depósito</button>
+        <div class="table-container">
+          <table id="tabelaDepositos">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Observações</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="despesas" class="page">
+        <h1>Despesas</h1>
+        <button class="btn-primary" onclick="showModal('modal-despesa')">Nova Despesa</button>
+        <div class="table-container">
+          <table id="tabelaDespesas">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Observações</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="vistorias-dia" class="page">
+        <h1>Vistorias do Dia</h1>
+        <button class="btn-primary" onclick="exportarVistoriasDoDia()">
+          <i class="fas fa-file-pdf"></i> Exportar Vistorias do Dia
+        </button>
+        <div class="table-container">
+          <table id="tabelaVistoriasDia">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Placa</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Pagamento</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="relatorios" class="page">
+        <div class="report-header">
+          <h1>Relatórios</h1>
+          <div class="report-actions">
+            <button class="btn-modern" onclick="exportarRelatorioCompleto()">
+              <i class="fas fa-file-pdf"></i>
+              <span>Exportar Relatório</span>
+            </button>
+            <button class="btn-modern danger" onclick="limparDados()">
+              <i class="fas fa-trash"></i>
+              <span>Limpar Dados</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="report-dashboard">
+          <div class="report-section daily-summary">
+            <div class="section-header">
+              <h2><i class="fas fa-calendar-day"></i> Resumo do Dia</h2>
+              <span class="date-display"></span>
+            </div>
+            
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-car"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Vistorias</h3>
+                  <p id="daily-inspections">0</p>
+                </div>
+              </div>
+              
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>PIX</h3>
+                  <p id="daily-pix">R$ 0,00</p>
+                </div>
+              </div>
+              
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Dinheiro</h3>
+                  <p id="daily-cash">R$ 0,00</p>
+                </div>
+              </div>
+              
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-university"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Depositado</h3>
+                  <p id="daily-deposited">R$ 0,00</p>
+                </div>
+              </div>
+              
+              <div class="metric-card highlight">
+                <div class="metric-icon">
+                  <i class="fas fa-calculator"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Falta Depositar</h3>
+                  <p id="daily-pending">R$ 0,00</p>
+                </div>
+              </div>
+              
+              <div class="metric-card alert">
+                <div class="metric-icon">
+                  <i class="fas fa-receipt"></i>
+                </div>
+                <div class="metric-info">
+                  <h3>Despesas</h3>
+                  <p id="daily-expenses">R$ 0,00</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal de Inspeção -->
+  <div id="modal-inspecao" class="modal">
+    <div class="modal-content">
+      <h2>Nova Inspeção</h2>
+      <form id="formInspecao">
+        <div class="form-group">
+          <label>Placa</label>
+          <input type="text" name="placa" required>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Veículo</label>
+          <select name="tipo" required onchange="atualizarValor()">
+            <option value="moto">Moto - R$ 190</option>
+            <option value="carro">Carro - R$ 230</option>
+            <option value="caminhao">Caminhão - R$ 280</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Método de Pagamento</label>
+          <select name="pagamento" required onchange="togglePagamentoMisto()">
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="misto">Misto</option>
+          </select>
+        </div>
+        <div id="valores-misto" style="display: none">
+          <div class="form-group">
+            <label>Valor em PIX</label>
+            <input type="number" name="valor_pix" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Valor em Dinheiro</label>
+            <input type="number" name="valor_dinheiro" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea name="observacoes"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" class="btn-secondary" onclick="hideModal('modal-inspecao')">Fechar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Depósito -->
+  <div id="modal-deposito" class="modal">
+    <div class="modal-content">
+      <h2>Novo Depósito</h2>
+      <form id="formDeposito">
+        <div class="form-group">
+          <label>Valor</label>
+          <input type="number" name="valor" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" name="data" required>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea name="observacoes"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" class="btn-secondary" onclick="hideModal('modal-deposito')">Fechar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Despesa -->
+  <div id="modal-despesa" class="modal">
+    <div class="modal-content">
+      <h2>Nova Despesa</h2>
+      <form id="formDespesa">
+        <div class="form-group">
+          <label>Valor</label>
+          <input type="number" name="valor" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea name="observacoes"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" class="btn-secondary" onclick="hideModal('modal-despesa')">Fechar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Verificação de autenticação
+    function checkAuthentication() {
+      if (localStorage.getItem('visiocarLoggedIn') !== 'true') {
+        window.location.href = '/login';
+      }
+    }
+    
+    // Chamar no carregamento da página
+    checkAuthentication();
+    
+    // Função de logout
+    function logout() {
+      localStorage.removeItem('visiocarLoggedIn');
+      window.location.href = '/login';
+    }
+    
+    // Valores fixos dos serviços
+    const VALORES = {
+      moto: 190,
+      carro: 230,
+      caminhao: 280
+    };
+    
+    // Estado global do sistema
+    let estado = {
+      inspecoes: [],
+      depositos: [],
+      despesas: []
+    };
+    
+    // Carrega dados do localStorage
+    function carregarDados() {
+      const dadosSalvos = localStorage.getItem('estado');
+      if (dadosSalvos) {
+        estado = JSON.parse(dadosSalvos);
+      }
+    }
+    
+    // Salva dados no localStorage
+    function salvarDados() {
+      localStorage.setItem('estado', JSON.stringify(estado));
+    }
+    
+    // Navegação entre páginas
+    document.querySelectorAll('.sidebar a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const pageId = link.dataset.page;
+    
+        // Atualiza navegação
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+    
+        // Mostra página correta
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+      });
+    });
+    
+    function exportarRelatorioCompleto() {
+      const hoje = new Date().toLocaleDateString();
+      const totalInspecoes = estado.inspecoes.length;
+      const totalReceitas = calcularTotalDinheiro() + calcularTotalPIX();
+      const totalDespesas = calcularTotalDespesas();
+      const lucroLiquido = calcularLucroLiquido();
+      const faltaDepositar = calcularFaltaDepositar();
+      const totalDepositos = calcularTotalDepositos();
+    
+      const content = `
+        <div style="padding: 40px; font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">
+            <h1 style="color: #333; margin-bottom: 10px; font-size: 24px;">RELATÓRIO FINANCEIRO - INSPEÇÃO VEICULAR</h1>
+            <p style="color: #666;">Data: ${hoje}</p>
+          </div>
+    
+          <div style="margin-bottom: 40px;">
+            <h2 style="color: #333; font-size: 20px; margin-bottom: 15px;">Resumo do Dia</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              <tr style="background: #f8f9fa;">
+                <td style="padding: 12px; border: 1px solid #ddd;">Total Faturado:</td>
+                <td style="padding: 12px; border: 1px solid #ddd;">R$ ${totalReceitas.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px; border: 1px solid #ddd;">Total via PIX:</td>
+                <td style="padding: 12px; border: 1px solid #ddd;">R$ ${calcularTotalPIX().toFixed(2)}</td>
+              </tr>
+              <tr style="background: #f8f9fa;">
+                <td style="padding: 12px; border: 1px solid #ddd;">Total em Dinheiro:</td>
+                <td style="padding: 12px; border: 1px solid #ddd;">R$ ${calcularTotalDinheiro().toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px; border: 1px solid #ddd;">Total Depositado:</td>
+                <td style="padding: 12px; border: 1px solid #ddd;">R$ ${totalDepositos.toFixed(2)}</td>
+              </tr>
+              <tr style="background: #f8f9fa;">
+                <td style="padding: 12px; border: 1px solid #ddd;">Diferença (Dinheiro - Depósitos):</td>
+                <td style="padding: 12px; border: 1px solid #ddd;">R$ ${faltaDepositar.toFixed(2)}</td>
+              </tr>
+            </table>
+            ${Math.abs(faltaDepositar) > 0 ? 
+              `<div style="color: ${faltaDepositar > 0 ? '#dc3545' : '#28a745'}; font-weight: bold; margin-top: 10px;">
+                ${faltaDepositar > 0 ? 'ATENÇÃO: Falta depositar R$ ' + faltaDepositar.toFixed(2) : 
+                'ATENÇÃO: Excesso de R$ ' + Math.abs(faltaDepositar).toFixed(2) + ' em depósitos!'}
+              </div>` : ''}
+          </div>
+    
+          <div style="margin-bottom: 40px;">
+            <h2 style="color: #333; font-size: 20px; margin-bottom: 15px;">Inspeções Realizadas</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #007bff; color: white;">
+                  <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Tipo</th>
+                  <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Valor</th>
+                  <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Pagamento</th>
+                  <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Data/Hora</th>
+                  <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Observações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${estado.inspecoes.map(insp => `
+                  <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${insp.tipo}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">R$ ${insp.valor.toFixed(2)}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">
+                      ${insp.pagamento === 'misto' ? 
+                        `Misto (PIX: R$ ${insp.valor_pix.toFixed(2)}, Dinheiro: R$ ${insp.valor_dinheiro.toFixed(2)})` : 
+                        insp.pagamento}
+                    </td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${insp.data}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${insp.observacoes || '-'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+    
+          <div>
+            <h2 style="color: #333; font-size: 20px; margin-bottom: 15px;">Depósitos Realizados</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #28a745; color: white;">
+                  <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Valor</th>
+                  <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Data/Hora</th>
+                  <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Observações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${estado.depositos.map(dep => `
+                  <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd;">R$ ${dep.valor.toFixed(2)}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${dep.data}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">${dep.observacoes || '-'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #ff6b00; margin-bottom: 10px;">Relatório Financeiro - VisioCar</h1>
+            <p style="color: #666;">Gerado em ${hoje}</p>
+          </div>
+    
+          <div style="margin-bottom: 30px; background: #f8f9fa; padding: 20px; border-radius: 10px;">
+            <h2 style="color: #333; margin-bottom: 20px;">Resumo Geral</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h3 style="color: #666; font-size: 14px;">Total de Inspeções</h3>
+                <p style="color: #ff6b00; font-size: 24px; font-weight: bold;">${totalInspecoes}</p>
+              </div>
+              <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h3 style="color: #666; font-size: 14px;">Receitas Totais</h3>
+                <p style="color: #ff6b00; font-size: 24px; font-weight: bold;">R$ ${totalReceitas.toFixed(2)}</p>
+              </div>
+              <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h3 style="color: #666; font-size: 14px;">Despesas Totais</h3>
+                <p style="color: #dc3545; font-size: 24px; font-weight: bold;">R$ ${totalDespesas.toFixed(2)}</p>
+              </div>
+              <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h3 style="color: #666; font-size: 14px;">Lucro Líquido</h3>
+                <p style="color: #28a745; font-size: 24px; font-weight: bold;">R$ ${lucroLiquido.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+    
+          <div style="margin-bottom: 30px;">
+            <h2 style="color: #333; margin-bottom: 20px;">Últimas Inspeções</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #f8f9fa;">
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Data</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Placa</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Tipo</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${estado.inspecoes.slice(-5).map(insp => `
+                  <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${insp.data}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${insp.placa}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">${insp.tipo}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #eee;">R$ ${insp.valor.toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    
+      const opt = {
+        margin: 1,
+        filename: `relatorio-visiocar-${hoje.replace(/\//g, '-')}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
+      };
+    
+      html2pdf().set(opt).from(content).save();
+    }
+    
+    // Controles do Modal
+    function showModal(modalId) {
+      document.getElementById(modalId).style.display = 'block';
+    }
+    
+    function hideModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+    
+    // Funções de cálculo
+    function calcularTotalDinheiro() {
+      return estado.inspecoes.reduce((total, insp) => {
+        if (insp.pagamento === 'dinheiro') return total + insp.valor;
+        if (insp.pagamento === 'misto') return total + insp.valor_dinheiro;
+        return total;
+      }, 0);
+    }
+    
+    function calcularTotalPIX() {
+      return estado.inspecoes.reduce((total, insp) => {
+        if (insp.pagamento === 'pix') return total + insp.valor;
+        if (insp.pagamento === 'misto') return total + insp.valor_pix;
+        return total;
+      }, 0);
+    }
+    
+    function calcularTotalDepositos() {
+      return estado.depositos.reduce((total, dep) => total + dep.valor, 0);
+    }
+    
+    function calcularTotalDespesas() {
+      return estado.despesas.reduce((total, desp) => total + desp.valor, 0);
+    }
+    
+    function calcularFaltaDepositar() {
+      return calcularTotalDinheiro() - calcularTotalDespesas() - calcularTotalDepositos();
+    }
+    
+    function calcularLucroLiquido() {
+      return calcularTotalDinheiro() + calcularTotalPIX() - calcularTotalDespesas();
+    }
+    
+    // Atualizar Dashboard
+    function atualizarDashboard() {
+      // Atualizar cards
+      const cards = document.querySelectorAll('#dashboard .cards .card .value');
+      if (cards.length >= 4) {
+        cards[0].textContent = `R$ ${(calcularTotalDinheiro() + calcularTotalPIX()).toFixed(2)}`;
+        cards[1].textContent = `R$ ${calcularTotalDespesas().toFixed(2)}`;
+        cards[2].textContent = `R$ ${calcularLucroLiquido().toFixed(2)}`;
+        cards[3].textContent = estado.inspecoes.length;
+      }
+    
+      // Atualizar relatório
+      const hoje = new Date().toLocaleDateString();
+      const dateDisplay = document.querySelector('.date-display');
+      if (dateDisplay) dateDisplay.textContent = hoje;
+    
+      const dailyInspections = document.getElementById('daily-inspections');
+      const dailyPix = document.getElementById('daily-pix');
+      const dailyCash = document.getElementById('daily-cash');
+      const dailyDeposited = document.getElementById('daily-deposited');
+      const dailyPending = document.getElementById('daily-pending');
+      const dailyExpenses = document.getElementById('daily-expenses');
+    
+      const inspecoesHoje = estado.inspecoes.filter(i => i.data === hoje).length;
+      const depositosHoje = calcularTotalDepositos();
+      const despesasHoje = estado.despesas.filter(d => d.data === hoje)
+        .reduce((total, d) => total + d.valor, 0);
+    
+      if (dailyInspections) dailyInspections.textContent = inspecoesHoje;
+      if (dailyPix) dailyPix.textContent = `R$ ${calcularTotalPIX().toFixed(2)}`;
+      if (dailyCash) dailyCash.textContent = `R$ ${calcularTotalDinheiro().toFixed(2)}`;
+      if (dailyDeposited) dailyDeposited.textContent = `R$ ${depositosHoje.toFixed(2)}`;
+      if (dailyPending) dailyPending.textContent = `R$ ${calcularFaltaDepositar().toFixed(2)}`;
+      if (dailyExpenses) dailyExpenses.textContent = `R$ ${despesasHoje.toFixed(2)}`;
+    
+      // Atualizar gráfico de receitas vs. despesas
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      
+      // Agrupar dados por mês para o gráfico
+      const datasAgrupadas = {};
+      
+      estado.inspecoes.forEach(insp => {
+        const data = new Date(insp.data);
+        const chave = `${data.getMonth()+1}/${data.getFullYear()}`;
+        
+        if (!datasAgrupadas[chave]) {
+          datasAgrupadas[chave] = { receitas: 0, despesas: 0 };
+        }
+        
+        datasAgrupadas[chave].receitas += insp.valor;
+      });
+      
+      estado.despesas.forEach(desp => {
+        const data = new Date(desp.data);
+        const chave = `${data.getMonth()+1}/${data.getFullYear()}`;
+        
+        if (!datasAgrupadas[chave]) {
+          datasAgrupadas[chave] = { receitas: 0, despesas: 0 };
+        }
+        
+        datasAgrupadas[chave].despesas += desp.valor;
+      });
+      
+      const labels = Object.keys(datasAgrupadas).sort((a, b) => {
+        const [mesA, anoA] = a.split('/');
+        const [mesB, anoB] = b.split('/');
+        return new Date(anoA, mesA-1) - new Date(anoB, mesB-1);
+      });
+      
+      const receitasData = labels.map(label => datasAgrupadas[label].receitas);
+      const despesasData = labels.map(label => datasAgrupadas[label].despesas);
+      
+      // Destruir gráfico existente se houver
+      if (window.revenueChart) {
+        window.revenueChart.destroy();
+      }
+      
+      window.revenueChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Receitas',
+              data: receitasData,
+              backgroundColor: '#ff6b00',
+              borderColor: '#ff6b00',
+              borderWidth: 1
+            },
+            {
+              label: 'Despesas',
+              data: despesasData,
+              backgroundColor: '#dc3545',
+              borderColor: '#dc3545',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return 'R$ ' + value;
+                }
+              }
+            }
+          },
+          plugins: {
+            title: {
+              display: true,
+              text: 'Receitas vs. Despesas por Mês'
+            }
+          }
+        }
+      });
+    }
+    
+    // Funções do formulário de inspeção
+    function atualizarValor() {
+      const tipo = document.querySelector('select[name="tipo"]').value;
+      const valorPix = document.querySelector('input[name="valor_pix"]');
+      const valorDinheiro = document.querySelector('input[name="valor_dinheiro"]');
+      
+      if (valorPix && valorDinheiro) {
+        const total = VALORES[tipo];
+        valorPix.placeholder = `Máximo: R$ ${total.toFixed(2)}`;
+        valorDinheiro.placeholder = `Máximo: R$ ${total.toFixed(2)}`;
+      }
+    }
+    
+    function togglePagamentoMisto() {
+      const pagamento = document.querySelector('select[name="pagamento"]').value;
+      const valoresMisto = document.getElementById('valores-misto');
+      
+      if (pagamento === 'misto') {
+        valoresMisto.style.display = 'block';
+        atualizarValor();
+      } else {
+        valoresMisto.style.display = 'none';
+      }
+    }
+    
+    function toggleMenu() {
+      const sidebar = document.querySelector('.sidebar');
+      sidebar.classList.toggle('active');
+    }
+    
+    function getVistoriasDoDia() {
+      const hoje = new Date().toLocaleDateString();
+      return estado.inspecoes.filter(insp => insp.data === hoje);
+    }
+    
+    function atualizarVistoriasDoDia() {
+      const vistorias = getVistoriasDoDia();
+      const tabela = document.getElementById('tabelaVistoriasDia');
+      
+      if (!tabela) return;
+      
+      const tbody = tabela.querySelector('tbody');
+      tbody.innerHTML = '';
+      
+      vistorias.forEach(insp => {
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+          <td>${insp.data}</td>
+          <td>${insp.placa}</td>
+          <td>${insp.tipo}</td>
+          <td>R$ ${insp.valor.toFixed(2)}</td>
+          <td>${insp.pagamento === 'misto' ? 
+            `Misto (PIX: R$ ${insp.valor_pix.toFixed(2)}, Dinheiro: R$ ${insp.valor_dinheiro.toFixed(2)})` : 
+            insp.pagamento}</td>
+        `;
+        
+        tbody.appendChild(tr);
+      });
+    }
+    
+    function exportarVistoriasDoDia() {
+      const vistorias = getVistoriasDoDia();
+      const hoje = new Date().toLocaleDateString();
+      
+      if (vistorias.length === 0) {
+        alert('Não há vistorias registradas para hoje.');
+        return;
+      }
+      
+      const content = `
+        <div style="padding: 20px; font-family: Arial, sans-serif;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #ff6b00; margin-bottom: 10px;">Vistorias do Dia - VisioCar</h1>
+            <p style="color: #666;">Data: ${hoje}</p>
+          </div>
+          
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+              <tr style="background: #ff6b00; color: white;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Placa</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Tipo</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Valor</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Pagamento</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Observações</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${vistorias.map(insp => `
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #ddd;">${insp.placa}</td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">${insp.tipo}</td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">R$ ${insp.valor.toFixed(2)}</td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">
+                    ${insp.pagamento === 'misto' ? 
+                      `Misto (PIX: R$ ${insp.valor_pix.toFixed(2)}, Dinheiro: R$ ${insp.valor_dinheiro.toFixed(2)})` : 
+                      insp.pagamento}
+                  </td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">${insp.observacoes || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+            <h2 style="color: #333; margin-bottom: 10px; font-size: 18px;">Resumo</h2>
+            <p><strong>Total de vistorias:</strong> ${vistorias.length}</p>
+            <p><strong>Total em PIX:</strong> R$ ${vistorias.reduce((total, insp) => {
+              if (insp.pagamento === 'pix') return total + insp.valor;
+              if (insp.pagamento === 'misto') return total + insp.valor_pix;
+              return total;
+            }, 0).toFixed(2)}</p>
+            <p><strong>Total em Dinheiro:</strong> R$ ${vistorias.reduce((total, insp) => {
+              if (insp.pagamento === 'dinheiro') return total + insp.valor;
+              if (insp.pagamento === 'misto') return total + insp.valor_dinheiro;
+              return total;
+            }, 0).toFixed(2)}</p>
+            <p><strong>Total Geral:</strong> R$ ${vistorias.reduce((total, insp) => total + insp.valor, 0).toFixed(2)}</p>
+          </div>
+        </div>
+      `;
+      
+      const opt = {
+        margin: 1,
+        filename: `vistorias-do-dia-${hoje.replace(/\//g, '-')}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
+      };
+      
+      html2pdf().set(opt).from(content).save();
+    }
+    
+    function limparDados() {
+      if (confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita!')) {
+        estado = {
+          inspecoes: [],
+          depositos: [],
+          despesas: []
+        };
+        
+        salvarDados();
+        atualizarTabelas();
+        atualizarDashboard();
+        atualizarVistoriasDoDia();
+        
+        alert('Dados limpos com sucesso!');
+      }
+    }
+    
+    function editarInspecao(index) {
+      const insp = estado.inspecoes[index];
+      
+      // Preencher o formulário
+      const form = document.getElementById('formInspecao');
+      form.querySelector('input[name="placa"]').value = insp.placa;
+      form.querySelector('select[name="tipo"]').value = insp.tipo;
+      form.querySelector('select[name="pagamento"]').value = insp.pagamento;
+      form.querySelector('textarea[name="observacoes"]').value = insp.observacoes || '';
+      
+      if (insp.pagamento === 'misto') {
+        document.getElementById('valores-misto').style.display = 'block';
+        form.querySelector('input[name="valor_pix"]').value = insp.valor_pix;
+        form.querySelector('input[name="valor_dinheiro"]').value = insp.valor_dinheiro;
+      } else {
+        document.getElementById('valores-misto').style.display = 'none';
+      }
+      
+      // Remover a inspeção atual
+      estado.inspecoes.splice(index, 1);
+      
+      // Mostrar o modal
+      showModal('modal-inspecao');
+    }
+    
+    function excluirInspecao(index) {
+      if (confirm('Tem certeza que deseja excluir esta inspeção?')) {
+        estado.inspecoes.splice(index, 1);
+        salvarDados();
+        atualizarTabelas();
+        atualizarDashboard();
+        atualizarVistoriasDoDia();
+      }
+    }
+    
+    function editarDeposito(index) {
+      const dep = estado.depositos[index];
+      
+      // Preencher o formulário
+      const form = document.getElementById('formDeposito');
+      form.querySelector('input[name="valor"]').value = dep.valor;
+      
+      // Formatar a data para o formato YYYY-MM-DD esperado pelo input date
+      const data = new Date(dep.data);
+      const dataFormatada = data.toISOString().split('T')[0];
+      form.querySelector('input[name="data"]').value = dataFormatada;
+      
+      form.querySelector('textarea[name="observacoes"]').value = dep.observacoes || '';
+      
+      // Remover o depósito atual
+      estado.depositos.splice(index, 1);
+      
+      // Mostrar o modal
+      showModal('modal-deposito');
+    }
+    
+    function excluirDeposito(index) {
+      if (confirm('Tem certeza que deseja excluir este depósito?')) {
+        estado.depositos.splice(index, 1);
+        salvarDados();
+        atualizarTabelas();
+        atualizarDashboard();
+      }
+    }
+    
+    function editarDespesa(index) {
+      const desp = estado.despesas[index];
+      
+      // Preencher o formulário
+      const form = document.getElementById('formDespesa');
+      form.querySelector('input[name="valor"]').value = desp.valor;
+      form.querySelector('textarea[name="observacoes"]').value = desp.observacoes || '';
+      
+      // Remover a despesa atual
+      estado.despesas.splice(index, 1);
+      
+      // Mostrar o modal
+      showModal('modal-despesa');
+    }
+    
+    function excluirDespesa(index) {
+      if (confirm('Tem certeza que deseja excluir esta despesa?')) {
+        estado.despesas.splice(index, 1);
+        salvarDados();
+        atualizarTabelas();
+        atualizarDashboard();
+      }
+    }
+    
+    function atualizarTabelas() {
+      // Tabela de inspeções
+      const tabelaInspecoes = document.getElementById('tabelaInspecoes');
+      if (tabelaInspecoes) {
+        const tbody = tabelaInspecoes.querySelector('tbody');
+        tbody.innerHTML = '';
+        
+        estado.inspecoes.forEach((insp, index) => {
+          const tr = document.createElement('tr');
+          
+          tr.innerHTML = `
+            <td>${insp.data}</td>
+            <td>${insp.placa}</td>
+            <td>${insp.tipo}</td>
+            <td>R$ ${insp.valor.toFixed(2)}</td>
+            <td>${insp.pagamento === 'misto' ? 
+              `Misto (PIX: R$ ${insp.valor_pix.toFixed(2)}, Dinheiro: R$ ${insp.valor_dinheiro.toFixed(2)})` : 
+              insp.pagamento}</td>
+            <td>
+              <button class="btn-action" onclick="editarInspecao(${index})"><i class="fas fa-edit"></i></button>
+              <button class="btn-action btn-delete" onclick="excluirInspecao(${index})"><i class="fas fa-trash"></i></button>
+            </td>
+          `;
+          
+          tbody.appendChild(tr);
+        });
+      }
+      
+      // Tabela de depósitos
+      const tabelaDepositos = document.getElementById('tabelaDepositos');
+      if (tabelaDepositos) {
+        const tbody = tabelaDepositos.querySelector('tbody');
+        tbody.innerHTML = '';
+        
+        estado.depositos.forEach((dep, index) => {
+          const tr = document.createElement('tr');
+          
+          tr.innerHTML = `
+            <td>${dep.data}</td>
+            <td>R$ ${dep.valor.toFixed(2)}</td>
+            <td>${dep.observacoes || '-'}</td>
+            <td>
+              <button class="btn-action" onclick="editarDeposito(${index})"><i class="fas fa-edit"></i></button>
+              <button class="btn-action btn-delete" onclick="excluirDeposito(${index})"><i class="fas fa-trash"></i></button>
+            </td>
+          `;
+          
+          tbody.appendChild(tr);
+        });
+      }
+      
+      // Tabela de despesas
+      const tabelaDespesas = document.getElementById('tabelaDespesas');
+      if (tabelaDespesas) {
+        const tbody = tabelaDespesas.querySelector('tbody');
+        tbody.innerHTML = '';
+        
+        estado.despesas.forEach((desp, index) => {
+          const tr = document.createElement('tr');
+          
+          tr.innerHTML = `
+            <td>${desp.data}</td>
+            <td>R$ ${desp.valor.toFixed(2)}</td>
+            <td>${desp.observacoes || '-'}</td>
+            <td>
+              <button class="btn-action" onclick="editarDespesa(${index})"><i class="fas fa-edit"></i></button>
+              <button class="btn-action btn-delete" onclick="excluirDespesa(${index})"><i class="fas fa-trash"></i></button>
+            </td>
+          `;
+          
+          tbody.appendChild(tr);
+        });
+      }
+    }
+    
+    function inicializarSistema() {
+      carregarDados();
+      atualizarDashboard();
+      atualizarTabelas();
+      atualizarVistoriasDoDia();
+      
+      // Configurar data padrão para hoje nos formulários
+      const hoje = new Date().toISOString().split('T')[0];
+      const dataInputs = document.querySelectorAll('input[type="date"]');
+      dataInputs.forEach(input => {
+        input.value = hoje;
+      });
+      
+      // Event listeners para formulários
+      const formInspecao = document.getElementById('formInspecao');
+      formInspecao.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const tipo = formInspecao.querySelector('select[name="tipo"]').value;
+        const pagamento = formInspecao.querySelector('select[name="pagamento"]').value;
+        const placa = formInspecao.querySelector('input[name="placa"]').value;
+        const observacoes = formInspecao.querySelector('textarea[name="observacoes"]').value;
+        
+        let valor = VALORES[tipo];
+        let valor_pix = 0;
+        let valor_dinheiro = 0;
+        
+        if (pagamento === 'misto') {
+          valor_pix = parseFloat(formInspecao.querySelector('input[name="valor_pix"]').value);
+          valor_dinheiro = parseFloat(formInspecao.querySelector('input[name="valor_dinheiro"]').value);
+          
+          if (valor_pix + valor_dinheiro !== valor) {
+            alert(`O total deve ser R$ ${valor.toFixed(2)}. Por favor, verifique os valores.`);
+            return;
+          }
+        }
+        
+        const inspecao = {
+          data: new Date().toLocaleDateString(),
+          placa,
+          tipo,
+          valor,
+          pagamento,
+          observacoes,
+          timestamp: new Date().getTime()
+        };
+        
+        if (pagamento === 'misto') {
+          inspecao.valor_pix = valor_pix;
+          inspecao.valor_dinheiro = valor_dinheiro;
+        }
+        
+        estado.inspecoes.push(inspecao);
+        salvarDados();
+        
+        formInspecao.reset();
+        hideModal('modal-inspecao');
+        atualizarTabelas();
+        atualizarDashboard();
+        atualizarVistoriasDoDia();
+        
+        // Configurar data padrão para hoje
+        const dataInputs = formInspecao.querySelectorAll('input[type="date"]');
+        dataInputs.forEach(input => {
+          input.value = new Date().toISOString().split('T')[0];
+        });
+      });
+      
+      const formDeposito = document.getElementById('formDeposito');
+      formDeposito.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const valor = parseFloat(formDeposito.querySelector('input[name="valor"]').value);
+        const data = formDeposito.querySelector('input[name="data"]').value;
+        const observacoes = formDeposito.querySelector('textarea[name="observacoes"]').value;
+        
+        const deposito = {
+          data: new Date(data).toLocaleDateString(),
+          valor,
+          observacoes,
+          timestamp: new Date().getTime()
+        };
+        
+        estado.depositos.push(deposito);
+        salvarDados();
+        
+        formDeposito.reset();
+        hideModal('modal-deposito');
+        atualizarTabelas();
+        atualizarDashboard();
+        
+        // Configurar data padrão para hoje
+        const dataInputs = formDeposito.querySelectorAll('input[type="date"]');
+        dataInputs.forEach(input => {
+          input.value = new Date().toISOString().split('T')[0];
+        });
+      });
+      
+      const formDespesa = document.getElementById('formDespesa');
+      formDespesa.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const valor = parseFloat(formDespesa.querySelector('input[name="valor"]').value);
+        const observacoes = formDespesa.querySelector('textarea[name="observacoes"]').value;
+        
+        const despesa = {
+          data: new Date().toLocaleDateString(),
+          valor,
+          observacoes,
+          timestamp: new Date().getTime()
+        };
+        
+        estado.despesas.push(despesa);
+        salvarDados();
+        
+        formDespesa.reset();
+        hideModal('modal-despesa');
+        atualizarTabelas();
+        atualizarDashboard();
+      });
+    }
+    
+    // Inicializar o sistema quando a página carregar
+    window.addEventListener('DOMContentLoaded', inicializarSistema);
+  </script>
+</body>
+
+</html>
