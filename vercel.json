@@ -1,17 +1,27 @@
 {
   "version": 2,
-  "buildCommand": "./vercel-build.sh",
-  "outputDirectory": "dist",
   "builds": [
     {
       "src": "api/index.ts",
       "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist",
+        "buildCommand": "npm run build && cp -r public dist/"
+      }
     }
   ],
   "routes": [
     {
       "src": "/visiocar.html",
       "dest": "/public/visiocar.html"
+    },
+    {
+      "src": "/app",
+      "dest": "/visiocar.html"
     },
     {
       "src": "/api/(.*)",

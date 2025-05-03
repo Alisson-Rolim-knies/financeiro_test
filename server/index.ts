@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
+import fs from "fs";
 
 const app = express();
 app.use(express.json());
@@ -53,7 +55,30 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // In production, ensure we serve static files from both 'dist' and 'public' directories
+    app.use(express.static(path.join(process.cwd(), 'dist')));
+    app.use(express.static(path.join(process.cwd(), 'public')));
+    
+    // Specifically handle visiocar.html requests
+    app.get('/visiocar.html', (req, res) => {
+      const filePath = path.join(process.cwd(), 'public', 'visiocar.html');
+      if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
+      }
+      
+      // Try in dist if not found in public
+      const distFilePath = path.join(process.cwd(), 'dist', 'public', 'visiocar.html');
+      if (fs.existsSync(distFilePath)) {
+        return res.sendFile(distFilePath);
+      }
+      
+      return res.status(404).send('Arquivo visiocar.html não encontrado');
+    });
+    
+    // Fall through to index.html for SPA routing
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+    });
   }
 
   // ALWAYS serve the app on port 5000
