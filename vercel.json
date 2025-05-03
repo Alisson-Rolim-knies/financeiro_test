@@ -1,18 +1,19 @@
 {
   "version": 2,
-  "buildCommand": "next build",
-  "outputDirectory": ".next",
-  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "functions": {
-    "pages/api/*.js": {
+    "api/*.js": {
       "memory": 1024,
       "maxDuration": 10
     }
   },
   "routes": [
-    { "src": "/visiocar.html", "dest": "/api/visiocar" },
-    { "src": "/app", "dest": "/api/visiocar" },
-    { "src": "/app/status", "dest": "/api/status" },
+    { "src": "/visiocar.html", "dest": "/visiocar.html" },
+    { "src": "/api/status", "dest": "/api/status" },
+    { "src": "/api/inspections", "dest": "/api/visiocar" },
+    { "src": "/api/deposits", "dest": "/api/visiocar" },
+    { "src": "/api/expenses", "dest": "/api/visiocar" },
     { "handle": "filesystem" }
   ]
 }
