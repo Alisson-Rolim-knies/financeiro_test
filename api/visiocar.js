@@ -24,6 +24,12 @@ const parseDateParam = (dateStr) => {
 const { Pool } = require('@neondatabase/serverless');
 const { drizzle } = require('drizzle-orm/neon-serverless');
 const ws = require('ws');
+const { createClient } = require('@supabase/supabase-js');
+
+// Configuração do Supabase
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Schema do banco de dados
 const schema = {
@@ -41,8 +47,8 @@ const schema = {
   }
 };
 
-// Mock da conexão com o banco para evitar erros
-// Na versão final, substitua por código real de conexão
+// Para desenvolvimento, usamos dados na memória
+// No ambiente de produção, isso será substituído por chamadas ao Supabase
 let mockData = {
   inspections: [],
   deposits: [],

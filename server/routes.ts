@@ -420,6 +420,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Servir os arquivos estáticos do diretório attached_assets
+  app.use(express.static(path.join(process.cwd(), 'attached_assets')));
+
+  // Rota para a página de login
+  app.get('/login', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'attached_assets', 'index.html'));
+  });
+
+  // Rota para todas as outras requisições não atendidas
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'attached_assets', 'index.html'));
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

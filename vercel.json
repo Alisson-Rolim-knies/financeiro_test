@@ -1,19 +1,31 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "functions": {
-    "api/*.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
   "routes": [
-    { "src": "/visiocar.html", "dest": "/visiocar.html" },
-    { "src": "/api/status", "dest": "/api/status" },
-    { "src": "/api/inspections", "dest": "/api/visiocar" },
-    { "src": "/api/deposits", "dest": "/api/visiocar" },
-    { "src": "/api/expenses", "dest": "/api/visiocar" },
-    { "handle": "filesystem" }
-  ]
+    {
+      "src": "/api/status",
+      "dest": "/api/status.js"
+    },
+    {
+      "src": "/api/inspections(.*)",
+      "dest": "/api/visiocar.js"
+    },
+    {
+      "src": "/api/deposits(.*)",
+      "dest": "/api/visiocar.js"
+    },
+    {
+      "src": "/api/expenses(.*)",
+      "dest": "/api/visiocar.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/attached_assets/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
