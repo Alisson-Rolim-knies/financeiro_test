@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VisioCar - Redirecionando</title>
+  <title>VisioCar - Login</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,47 +12,107 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      background-color: #f5f5f5;
+      background-color: #f8f9fa;
       flex-direction: column;
     }
-    .container {
-      text-align: center;
+    .login-container {
+      width: 100%;
+      max-width: 360px;
       padding: 2rem;
       background-color: white;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      max-width: 90%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .logo-container {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      background-color: #ff6b00;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      color: white;
+      margin-bottom: 1rem;
     }
     h1 {
       color: #333;
-      margin-bottom: 1rem;
+      margin: 0 0 0.5rem;
+      font-size: 1.5rem;
+      text-align: center;
     }
-    p {
-      color: #666;
+    .form-group {
       margin-bottom: 1.5rem;
     }
-    .button {
-      display: inline-block;
-      background-color: #2563eb;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 4px;
-      text-decoration: none;
-      font-weight: bold;
-      transition: background-color 0.3s;
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #333;
+      font-size: 0.875rem;
     }
-    .button:hover {
-      background-color: #1d4ed8;
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none;
+      border-color: #ff6b00;
+      box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    }
+    .error-message {
+      color: #e53e3e;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .error-message.show {
+      display: block;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #ff6b00;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #e85d00;
+    }
+    .car-icon {
+      width: 36px;
+      height: 36px;
+    }
+    .message {
+      margin-top: 0.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: #666;
     }
     .loading {
-      display: block;
-      margin: 20px auto;
-      width: 50px;
-      height: 50px;
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #2563eb;
+      display: none;
+      margin: 1rem auto;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #ff6b00;
       border-radius: 50%;
       animation: spin 1s linear infinite;
+    }
+    .loading.show {
+      display: block;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -61,19 +121,102 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>VisioCar</h1>
-    <p>Redirecionando para o sistema de inspeção veicular...</p>
-    <div class="loading"></div>
-    <p>Se não for redirecionado automaticamente, clique no botão abaixo:</p>
-    <a class="button" href="/visiocar.html">Acessar o Sistema</a>
+  <div class="login-container">
+    <div class="logo-container">
+      <div class="logo">
+        <svg class="car-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/>
+          <circle cx="6.5" cy="16.5" r="2.5" />
+          <circle cx="16.5" cy="16.5" r="2.5" />
+        </svg>
+      </div>
+      <h1>VisioCar</h1>
+      <p class="message">Sistema de Gestão Financeira</p>
+    </div>
+    
+    <div class="form-group">
+      <label for="password">Senha</label>
+      <input type="password" id="password" placeholder="Digite a senha" />
+      <div id="error-message" class="error-message">Senha incorreta, tente novamente.</div>
+    </div>
+    
+    <button id="login-button">Entrar</button>
+    <div id="loading" class="loading"></div>
   </div>
 
   <script>
-    // Redirecionar após 3 segundos
-    setTimeout(function() {
-      window.location.href = '/visiocar.html';
-    }, 3000);
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginButton = document.getElementById('login-button');
+      const passwordInput = document.getElementById('password');
+      const errorMessage = document.getElementById('error-message');
+      const loading = document.getElementById('loading');
+      
+      // Verificar se já está logado
+      const isLoggedIn = localStorage.getItem('visiocarLoggedIn') === 'true';
+      if (isLoggedIn) {
+        window.location.href = '/visiocar.html';
+        return;
+      }
+      
+      // Login quando o botão for clicado
+      loginButton.addEventListener('click', handleLogin);
+      
+      // Login quando Enter for pressionado no campo de senha
+      passwordInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+          handleLogin();
+        }
+      });
+      
+      function handleLogin() {
+        // Limpar mensagem de erro anterior
+        errorMessage.classList.remove('show');
+        
+        // Verificar a senha
+        const password = passwordInput.value;
+        
+        if (password === 'visiocar') {
+          // Mostrar carregamento
+          loading.classList.add('show');
+          loginButton.disabled = true;
+          
+          // Verificar se a API está disponível
+          fetch('/api/status')
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('API indisponível');
+              }
+              return response.json();
+            })
+            .then(data => {
+              // Armazenar status de login
+              localStorage.setItem('visiocarLoggedIn', 'true');
+              localStorage.setItem('visiocarServer', JSON.stringify({
+                status: data.status,
+                database: data.database,
+                timestamp: data.timestamp
+              }));
+              
+              // Redirecionar após exibir o status
+              setTimeout(function() {
+                window.location.href = '/visiocar.html';
+              }, 1000);
+            })
+            .catch(error => {
+              // Exibir erro ao conectar à API
+              errorMessage.textContent = 'Erro ao conectar ao servidor: ' + error.message;
+              errorMessage.classList.add('show');
+              loading.classList.remove('show');
+              loginButton.disabled = false;
+            });
+        } else {
+          // Mostrar mensagem de erro de senha
+          errorMessage.textContent = 'Senha incorreta, tente novamente.';
+          errorMessage.classList.add('show');
+          passwordInput.focus();
+        }
+      }
+    });
   </script>
 </body>
 </html>

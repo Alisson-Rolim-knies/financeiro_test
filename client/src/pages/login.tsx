@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
 import { LoginCard } from '@/components/ui/login-card';
 
 export default function Login() {
-  const [, setLocation] = useLocation();
   const [loginError, setLoginError] = useState(false);
   
   // Check if already logged in on component mount
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('visiocarLoggedIn') === 'true';
     if (isLoggedIn) {
-      window.location.href = '/app';
+      window.location.href = '/visiocar.html';
     }
   }, []);
 
@@ -21,7 +19,7 @@ export default function Login() {
       
       // Redirect after successful login (500ms delay for animation)
       setTimeout(() => {
-        window.location.href = '/app';
+        window.location.href = '/visiocar.html';
       }, 500);
       
       return true;

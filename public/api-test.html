@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisioCar API Test</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    h1 {
+      color: #0066cc;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    
+    .card {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    button {
+      background: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    
+    button:hover {
+      background: #0055aa;
+    }
+    
+    pre {
+      background: #f1f1f1;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    
+    .error {
+      color: #d9534f;
+      background: #f9f2f2;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    .success {
+      color: #5cb85c;
+      background: #f2f9f2;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>VisioCar API Test</h1>
+  
+  <div class="card">
+    <h2>Status da API</h2>
+    <button id="checkStatus">Verificar Status</button>
+    <div id="statusResult"></div>
+  </div>
+  
+  <div class="card">
+    <h2>Inspeções</h2>
+    <button id="getInspections">Buscar Inspeções (Hoje)</button>
+    <button id="createInspection">Criar Inspeção de Teste</button>
+    <div id="inspectionsResult"></div>
+  </div>
+  
+  <div class="card">
+    <h2>Depósitos</h2>
+    <button id="getDeposits">Buscar Depósitos (Hoje)</button>
+    <button id="createDeposit">Criar Depósito de Teste</button>
+    <div id="depositsResult"></div>
+  </div>
+  
+  <div class="card">
+    <h2>Despesas</h2>
+    <button id="getExpenses">Buscar Despesas (Hoje)</button>
+    <button id="createExpense">Criar Despesa de Teste</button>
+    <div id="expensesResult"></div>
+  </div>
+  
+  <script>
+    // Funções de utilidade
+    function formatResult(data, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+    
+    function formatError(error, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `<div class="error">Erro: ${error.message}</div>`;
+    }
+    
+    function formatSuccess(message, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `<div class="success">${message}</div>`;
+    }
+    
+    // Helpers para data
+    function formatDateForAPI(date) {
+      return date.toISOString().split('T')[0];
+    }
+    
+    function getCurrentDateFormatted() {
+      return formatDateForAPI(new Date());
+    }
+    
+    // Eventos para os botões
+    document.getElementById('checkStatus').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/status');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        formatResult(data, 'statusResult');
+      } catch (error) {
+        formatError(error, 'statusResult');
+      }
+    });
+    
+    document.getElementById('getInspections').addEventListener('click', async () => {
+      try {
+        const today = getCurrentDateFormatted();
+        const response = await fetch(`/api/inspections?date=${today}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        formatResult(data, 'inspectionsResult');
+      } catch (error) {
+        formatError(error, 'inspectionsResult');
+      }
+    });
+    
+    document.getElementById('createInspection').addEventListener('click', async () => {
+      try {
+        const today = new Date();
+        
+        const newInspection = {
+          placa: `TEST-${Math.floor(Math.random() * 1000)}`,
+          dataHora: today.toISOString(),
+          cliente: 'Cliente Teste',
+          tipo: 'Vistoria Completa',
+          valor: 150,
+          dinheiro: 100,
+          pix: 50,
+          observacoes: 'Inspeção criada via API Test',
+          dia: today.getDate()
+        };
+        
+        const response = await fetch('/api/inspections', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(newInspection)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(errorData)}`);
+        }
+        
+        const data = await response.json();
+        formatSuccess('Inspeção criada com sucesso!', 'inspectionsResult');
+        formatResult(data, 'inspectionsResult');
+      } catch (error) {
+        formatError(error, 'inspectionsResult');
+      }
+    });
+    
+    document.getElementById('getDeposits').addEventListener('click', async () => {
+      try {
+        const today = getCurrentDateFormatted();
+        const response = await fetch(`/api/deposits?date=${today}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        formatResult(data, 'depositsResult');
+      } catch (error) {
+        formatError(error, 'depositsResult');
+      }
+    });
+    
+    document.getElementById('createDeposit').addEventListener('click', async () => {
+      try {
+        const today = new Date();
+        
+        const newDeposit = {
+          data: today.toISOString(),
+          valor: 500,
+          observacoes: 'Depósito criado via API Test',
+          dia: today.getDate()
+        };
+        
+        const response = await fetch('/api/deposits', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(newDeposit)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(errorData)}`);
+        }
+        
+        const data = await response.json();
+        formatSuccess('Depósito criado com sucesso!', 'depositsResult');
+        formatResult(data, 'depositsResult');
+      } catch (error) {
+        formatError(error, 'depositsResult');
+      }
+    });
+    
+    document.getElementById('getExpenses').addEventListener('click', async () => {
+      try {
+        const today = getCurrentDateFormatted();
+        const response = await fetch(`/api/expenses?date=${today}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        formatResult(data, 'expensesResult');
+      } catch (error) {
+        formatError(error, 'expensesResult');
+      }
+    });
+    
+    document.getElementById('createExpense').addEventListener('click', async () => {
+      try {
+        const today = new Date();
+        
+        const newExpense = {
+          data: today.toISOString(),
+          descricao: 'Despesa Teste',
+          valor: 100,
+          observacoes: 'Despesa criada via API Test',
+          dia: today.getDate()
+        };
+        
+        const response = await fetch('/api/expenses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(newExpense)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(errorData)}`);
+        }
+        
+        const data = await response.json();
+        formatSuccess('Despesa criada com sucesso!', 'expensesResult');
+        formatResult(data, 'expensesResult');
+      } catch (error) {
+        formatError(error, 'expensesResult');
+      }
+    });
+  </script>
+</body>
+</html>

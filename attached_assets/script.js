@@ -12,17 +12,131 @@ let estado = {
   despesas: []
 };
 
-// Carrega dados do localStorage
-function carregarDados() {
-  const dadosSalvos = localStorage.getItem('estado');
-  if (dadosSalvos) {
-    estado = JSON.parse(dadosSalvos);
+// Carrega dados do servidor
+async function carregarDados() {
+  // Tentamos carregar do servidor primeiro
+  try {
+    // Obtém a data atual para carregar apenas dados do dia
+    const hoje = new Date();
+    const dataFormatada = hoje.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    
+    // Carrega inspeções
+    const resInspecoes = await fetch(`/api/inspections?date=${dataFormatada}`);
+    if (resInspecoes.ok) {
+      estado.inspecoes = await resInspecoes.json();
+      console.log('Inspeções carregadas com sucesso da API');
+    }
+    
+    // Carrega depósitos
+    const resDepositos = await fetch(`/api/deposits?date=${dataFormatada}`);
+    if (resDepositos.ok) {
+      estado.depositos = await resDepositos.json();
+      console.log('Depósitos carregados com sucesso da API');
+    }
+    
+    // Carrega despesas
+    const resDespesas = await fetch(`/api/expenses?date=${dataFormatada}`);
+    if (resDespesas.ok) {
+      estado.despesas = await resDespesas.json();
+      console.log('Despesas carregadas com sucesso da API');
+    }
+    
+    // Atualiza interface após carregar dados
+    atualizarTabelas();
+    atualizarDashboard();
+  } catch (error) {
+    console.error('Erro ao carregar dados do servidor:', error);
+    
+    // Fallback para localStorage se a API falhar
+    const dadosSalvos = localStorage.getItem('estado');
+    if (dadosSalvos) {
+      estado = JSON.parse(dadosSalvos);
+      showToast('Usando dados em cache (modo offline)', 'warning');
+    }
   }
 }
 
-// Salva dados no localStorage
-function salvarDados() {
+// Salva dados no servidor e no localStorage como backup
+async function salvarDados() {
+  // Sempre salvamos no localStorage como backup
   localStorage.setItem('estado', JSON.stringify(estado));
+  
+  try {
+    // Aqui podemos implementar chamadas para salvar no servidor
+    // Exemplo (a ser implementado conforme necessário):
+    // await fetch('/api/save', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(estado)
+    // });
+    
+    console.log('Dados salvos localmente e prontos para sincronização');
+  } catch (error) {
+    console.error('Erro ao salvar dados no servidor:', error);
+    showToast('Dados salvos localmente (modo offline)', 'warning');
+  }
+}
+
+// Função auxiliar para exibir notificações
+function showToast(message, type = 'info') {
+  // Verifica se o elemento toast já existe
+  let toastContainer = document.querySelector('.toast-container');
+  
+  // Se não existir, cria o container
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container';
+    document.body.appendChild(toastContainer);
+    
+    // Adiciona estilo ao container
+    Object.assign(toastContainer.style, {
+      position: 'fixed',
+      bottom: '20px',
+      right: '20px',
+      zIndex: '1000'
+    });
+  }
+  
+  // Cria o toast
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  
+  // Estiliza o toast
+  Object.assign(toast.style, {
+    backgroundColor: type === 'warning' ? '#ffc107' : 
+                    type === 'error' ? '#dc3545' : '#0d6efd',
+    color: 'white',
+    padding: '10px 15px',
+    borderRadius: '4px',
+    marginTop: '10px',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+    opacity: '0',
+    transition: 'opacity 0.3s ease'
+  });
+  
+  // Adiciona o toast ao container
+  toastContainer.appendChild(toast);
+  
+  // Torna o toast visível após um pequeno delay (para o efeito de transição)
+  setTimeout(() => {
+    toast.style.opacity = '1';
+  }, 10);
+  
+  // Remove o toast após 5 segundos
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    
+    // Remove o toast do DOM após a transição de opacidade
+    setTimeout(() => {
+      toastContainer.removeChild(toast);
+      
+      // Se não houver mais toasts, remove o container
+      if (toastContainer.children.length === 0) {
+        document.body.removeChild(toastContainer);
+      }
+    }, 300);
+  }, 5000);
 }
 
 // Navegação entre páginas
@@ -272,13 +386,72 @@ function atualizarDashboard() {
   const depositosHoje = calcularTotalDepositos();
   const despesasHoje = estado.despesas.filter(d => d.data === hoje)
     .reduce((total, d) => total + d.valor, 0);
-
+  
+  // Calcular falta depositar para notificação
+  const faltaDepositar = calcularFaltaDepositar();
+  
   if (dailyInspections) dailyInspections.textContent = inspecoesHoje;
   if (dailyPix) dailyPix.textContent = `R$ ${calcularTotalPIX().toFixed(2)}`;
   if (dailyCash) dailyCash.textContent = `R$ ${calcularTotalDinheiro().toFixed(2)}`;
   if (dailyDeposited) dailyDeposited.textContent = `R$ ${depositosHoje.toFixed(2)}`;
-  if (dailyPending) dailyPending.textContent = `R$ ${calcularFaltaDepositar().toFixed(2)}`;
+  if (dailyPending) dailyPending.textContent = `R$ ${faltaDepositar.toFixed(2)}`;
   if (dailyExpenses) dailyExpenses.textContent = `R$ ${despesasHoje.toFixed(2)}`;
+  
+  // Adicionar notificação de "Falta depositar" no dashboard
+  let notificacaoElement = document.getElementById('notificacao-deposito');
+  
+  // Se não existir o elemento de notificação, cria-lo
+  if (!notificacaoElement) {
+    notificacaoElement = document.createElement('div');
+    notificacaoElement.id = 'notificacao-deposito';
+    notificacaoElement.className = 'alerta-deposito';
+    
+    // Inserir após os cards no dashboard
+    const dashboard = document.getElementById('dashboard');
+    const chartContainer = dashboard.querySelector('.chart-container');
+    if (chartContainer) {
+      dashboard.insertBefore(notificacaoElement, chartContainer);
+    } else {
+      dashboard.appendChild(notificacaoElement);
+    }
+    
+    // Adicionar estilos CSS inline para o alerta
+    const style = document.createElement('style');
+    style.textContent = `
+      .alerta-deposito {
+        margin: 20px 0;
+        padding: 15px;
+        border-radius: 8px;
+        font-weight: bold;
+        display: none;
+      }
+      .alerta-deposito.warning {
+        background-color: #fff8f8;
+        border-left: 4px solid #dc3545;
+        color: #dc3545;
+      }
+      .alerta-deposito.success {
+        background-color: #f8fff8;
+        border-left: 4px solid #28a745;
+        color: #28a745;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // Atualizar conteúdo da notificação baseado no valor
+  if (Math.abs(faltaDepositar) > 0) {
+    if (faltaDepositar > 0) {
+      notificacaoElement.textContent = `ATENÇÃO: Falta depositar R$ ${faltaDepositar.toFixed(2)}`;
+      notificacaoElement.className = 'alerta-deposito warning';
+    } else {
+      notificacaoElement.textContent = `ATENÇÃO: Excesso de R$ ${Math.abs(faltaDepositar).toFixed(2)} em depósitos!`;
+      notificacaoElement.className = 'alerta-deposito success';
+    }
+    notificacaoElement.style.display = 'block';
+  } else {
+    notificacaoElement.style.display = 'none';
+  }
 }
 
 // Funções do formulário de inspeção
@@ -499,6 +672,7 @@ function exportarVistoriasDoDia() {
   const totalDespesasHoje = despesasHoje.reduce((total, d) => total + d.valor, 0);
 
   const faltaDepositar = calcularFaltaDepositar();
+  const totalDepositos = calcularTotalDepositos();
 
   const content = `
     <div style="padding: 40px; font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
@@ -526,6 +700,29 @@ function exportarVistoriasDoDia() {
             <h3 style="color: #666; font-size: 14px;">Despesas do Dia</h3>
             <p style="color: #dc3545; font-size: 24px; font-weight: bold;">R$ ${totalDespesasHoje.toFixed(2)}</p>
           </div>
+        </div>
+        
+        <!-- Seção de depósitos e diferença -->
+        <div style="margin-top: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h3 style="color: #666; font-size: 16px; margin-bottom: 10px;">Controle de Depósitos</h3>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+            <div>
+              <h4 style="color: #666; font-size: 14px; margin: 0 0 5px 0;">Total em Dinheiro:</h4>
+              <p style="color: #333; font-size: 16px; margin: 0 0 10px 0;">R$ ${totalDinheiro.toFixed(2)}</p>
+            </div>
+            <div>
+              <h4 style="color: #666; font-size: 14px; margin: 0 0 5px 0;">Total Depositado:</h4>
+              <p style="color: #333; font-size: 16px; margin: 0 0 10px 0;">R$ ${totalDepositos.toFixed(2)}</p>
+            </div>
+          </div>
+          
+          ${Math.abs(faltaDepositar) > 0 ? 
+            `<div style="margin-top: 10px; padding: 10px; background-color: ${faltaDepositar > 0 ? '#fff8f8' : '#f8fff8'}; border-left: 4px solid ${faltaDepositar > 0 ? '#dc3545' : '#28a745'}; border-radius: 4px;">
+              <p style="margin: 0; color: ${faltaDepositar > 0 ? '#dc3545' : '#28a745'}; font-weight: bold;">
+                ${faltaDepositar > 0 ? 'ATENÇÃO: Falta depositar R$ ' + faltaDepositar.toFixed(2) : 
+                'ATENÇÃO: Excesso de R$ ' + Math.abs(faltaDepositar).toFixed(2) + ' em depósitos!'}
+              </p>
+            </div>` : ''}
         </div>
       </div>
 
