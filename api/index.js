@@ -1,40 +1,32 @@
-// Arquivo simplificado para a Vercel
-const express = require('express');
-const path = require('path');
+// Arquivo simplificado para a Vercel - Serverless Function
 const fs = require('fs');
+const path = require('path');
 
-const app = express();
-
-// Servir arquivos estáticos
-app.use(express.static(path.join(__dirname, '..', 'public')));
-
-// Rota específica para servir o arquivo visiocar.html
-app.get('/visiocar.html', (req, res) => {
-  const filePath = path.join(__dirname, '..', 'public', 'visiocar.html');
-  if (fs.existsSync(filePath)) {
-    return res.sendFile(filePath);
-  } else {
-    return res.status(404).send('Arquivo não encontrado');
+// Função de manipulação de requisições para Vercel Serverless
+module.exports = (req, res) => {
+  const { url } = req;
+  
+  // Rota para o arquivo visiocar.html
+  if (url === '/visiocar.html' || url === '/app') {
+    try {
+      const htmlPath = path.join(__dirname, '..', 'public', 'visiocar.html');
+      const html = fs.readFileSync(htmlPath, 'utf8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.end(html);
+    } catch (error) {
+      return res.status(404).end('Arquivo visiocar.html não encontrado');
+    }
   }
-});
-
-// Rota para redirecionamento
-app.get('/app', (req, res) => {
-  res.redirect('/visiocar.html');
-});
-
-// Rota de status
-app.get('/app/status', (req, res) => {
-  res.json({
-    status: 'online',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Rota padrão para o SPA
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'client/index.html'));
-});
-
-// Exporta o módulo para a Vercel
-module.exports = app;
+  
+  // Rota para verificação de status
+  if (url === '/app/status') {
+    res.setHeader('Content-Type', 'application/json');
+    return res.end(JSON.stringify({
+      status: 'online',
+      timestamp: new Date().toISOString()
+    }));
+  }
+  
+  // Redirecionamento para visiocar.html
+  return res.writeHead(302, { Location: '/visiocar.html' }).end();
+};
