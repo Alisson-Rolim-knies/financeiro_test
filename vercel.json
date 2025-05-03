@@ -9,6 +9,14 @@
   },
   "routes": [
     { 
+      "src": "/cookie-handler.js",
+      "dest": "/public/cookie-handler.js",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Content-Type": "application/javascript; charset=utf-8"
+      }
+    },
+    { 
       "src": "/vercel-compat.js",
       "dest": "/public/vercel-compat.js",
       "headers": {

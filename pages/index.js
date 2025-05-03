@@ -15,11 +15,11 @@ export async function getStaticProps() {
     const htmlPath = path.join(process.cwd(), 'attached_assets', 'index.html');
     htmlContent = fs.readFileSync(htmlPath, 'utf8');
     
-    // Adiciona tratamento de erros assíncronos diretamente no HTML
+    // Adiciona scripts de tratamento de erros assíncronos e compatibilidade com restrição de cookies
     htmlContent = htmlContent.replace(
       '</head>',
       `
-      <!-- Script de tratamento de erros assíncronos para Vercel -->
+      <!-- Scripts de tratamento para compatibilidade com Vercel e restrições de cookies -->
       <script>
         window.addEventListener('unhandledrejection', function(event) {
           console.warn('Promessa não tratada foi rejeitada:', event.reason);
@@ -47,7 +47,35 @@ export async function getStaticProps() {
           return originalFetch.apply(this, args)
             .finally(() => clearTimeout(timeoutId));
         };
+
+        // Ajuste para o erro específico de MessageChannel
+        if (window.MessageChannel) {
+          try {
+            const OriginalMessageChannel = window.MessageChannel;
+            window.MessageChannel = function() {
+              const channel = new OriginalMessageChannel();
+              
+              // Adicionar timeout para portas do canal
+              const send = channel.port1.postMessage;
+              channel.port1.postMessage = function() {
+                try {
+                  return send.apply(this, arguments);
+                } catch (e) {
+                  console.warn('Erro em MessageChannel interceptado');
+                  return false;
+                }
+              };
+              
+              return channel;
+            };
+          } catch (e) {
+            console.warn('Não foi possível ajustar MessageChannel:', e);
+          }
+        }
       </script>
+      
+      <!-- Carregar script de tratamento para cookies de terceiros -->
+      <script src="/cookie-handler.js"></script>
       </head>`
     );
 

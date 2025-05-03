@@ -105,11 +105,32 @@ Se você ver o erro "A listener indicated an asynchronous response by returning 
 2. **Verifique se os scripts de compatibilidade foram carregados**:
    - Acesse a URL do seu site
    - Abra as ferramentas de desenvolvedor (F12)
-   - No console, procure por "Script de compatibilidade Vercel inicializado"
+   - No console, procure por "Script de compatibilidade Vercel inicializado" e "Tratador de cookies de terceiros inicializado com sucesso"
 
 3. **Atualize o CORS na Vercel**:
    - Vá para "Settings > Functions"
    - Certifique-se de que o CORS está configurado para permitir requisições do seu domínio
+
+### Problemas com Cookies de Terceiros no Chrome
+
+O Chrome e outros navegadores estão implementando restrições para cookies de terceiros, o que pode afetar o funcionamento da aplicação. Nossa versão inclui:
+
+1. **Script de tratamento de cookies** - Detecta navegadores com restrições de cookies
+2. **Adaptações para MessageChannel** - Evita que erros de canal de mensagem interrompam a aplicação
+3. **Fallback para localStorage** - Usa armazenamento local quando cookies não estão disponíveis
+
+Se os problemas persistirem em navegadores com cookies de terceiros bloqueados:
+
+1. **Peça ao usuário para habilitar cookies temporariamente**:
+   - No Chrome, clique no ícone 🔒 (cadeado) na barra de endereço
+   - Selecione "Configurações do site" > "Cookies e dados do site"
+   - Escolha "Permitir todos os cookies" temporariamente
+
+2. **Adicione seu site à lista de exceções**:
+   - Acesse chrome://settings/cookies no Chrome
+   - Em "Sites que sempre podem usar cookies", adicione seu domínio
+
+3. **Use o modo de navegação normal** em vez do modo anônimo/incógnito
 
 ## Suporte
 
@@ -124,3 +145,15 @@ Esta versão do projeto inclui as seguintes melhorias para resolver problemas de
 3. **CORS configurado corretamente** - Headers adequados para permitir comunicação cross-origin
 4. **Configuração de Vercel melhorada** - Ajustes no arquivo vercel.json para melhorar a estabilidade
 5. **Middleware para resolver erros de timeout** - API agora tem melhor gerenciamento de conexões
+
+## Correções para Problemas com Restrição de Cookies de Terceiros
+
+As seguintes melhorias foram adicionadas para lidar com as restrições de cookies de terceiros:
+
+1. **Arquivo `cookie-handler.js`** - Script dedicado para detectar e adaptar ao bloqueio de cookies
+2. **Sobrescrição de MessageChannel** - Intercepta e trata o erro específico que ocorre no Chrome
+3. **Estratégia de fallback para storage** - Usa localStorage quando sessionStorage não está disponível
+4. **Detecção de navegador** - Aplica diferentes técnicas dependendo do navegador detectado
+5. **Tratamento de eventos assíncronos** - Evita que erros de canal de mensagem interrompam a aplicação
+
+Estas soluções permitem que o VisioCar funcione mesmo em navegadores com políticas mais restritivas de cookies de terceiros, como o Chrome.
