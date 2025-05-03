@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "framework": "nextjs",
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "routes": [
     {
       "src": "/api/status",
@@ -27,5 +33,9 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "buildCommand": "echo \"Skipping build\"",
+  "installCommand": "echo \"Skipping install\"",
+  "outputDirectory": "attached_assets",
+  "public": true
 }

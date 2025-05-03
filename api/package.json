@@ -1,0 +1,16 @@
+{
+  "name": "visiocar-api",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@neondatabase/serverless": "latest",
+    "@supabase/supabase-js": "latest",
+    "drizzle-orm": "latest",
+    "express": "latest",
+    "serverless-http": "latest",
+    "ws": "latest"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
