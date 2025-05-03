@@ -250,11 +250,64 @@ app.get('/api/expenses', async (req, res) => {
   }
 });
 
+// Middleware para tratar erros de timeout
+app.use((req, res, next) => {
+  // Define um timeout de 10 segundos para todas as requisições
+  req.setTimeout(10000, () => {
+    console.warn('Timeout na requisição:', req.url);
+    // Não enviar resposta se já foi enviada
+    if (!res.headersSent) {
+      res.status(408).json({ error: 'Timeout na requisição' });
+    }
+  });
+  
+  // Para requisições que podem levar tempo, aumentar o timeout
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Keep-Alive', 'timeout=30');
+  
+  next();
+});
+
+// Middleware para CORS
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  
+  next();
+});
+
 // Exportar serverless handler
 module.exports = (req, res) => {
+  // Captura de erros assíncronos
+  process.on('unhandledRejection', (reason, promise) => {
+    console.warn('Promessa não tratada rejeitada:', reason);
+    // Não enviar resposta se já foi enviada
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  });
+
   // Vercel envia a rota como "/api/visiocar" mas Express espera "/api/inspections" ou similar
   // Precisamos fazer essa correção no path com base nos headers
   const originalUrl = req.headers['x-forwarded-uri'] || req.url;
+  
+  // Tratamento de Timeout para a requisição
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      console.warn('Timeout global na requisição:', originalUrl);
+      res.status(408).json({ error: 'Timeout na requisição' });
+    }
+  }, 28000); // 28 segundos (limite da Vercel é 30s)
+  
+  // Limpar o timeout quando a resposta for enviada
+  res.on('finish', () => {
+    clearTimeout(timeout);
+  });
   
   if (originalUrl.includes('/api/inspections')) {
     req.url = '/api/inspections';
@@ -266,5 +319,13 @@ module.exports = (req, res) => {
     req.url = '/api/status';
   }
   
-  return serverless(app)(req, res);
+  // Usar try-catch para capturar erros no handler serverless
+  try {
+    return serverless(app)(req, res);
+  } catch (error) {
+    console.error('Erro no serverless handler:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  }
 };

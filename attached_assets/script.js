@@ -14,28 +14,47 @@ let estado = {
 
 // Carrega dados do servidor
 async function carregarDados() {
+  // Definimos um timeout para garantir que a função não trave
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Timeout ao carregar dados')), 8000);
+  });
+
   // Tentamos carregar do servidor primeiro
   try {
     // Obtém a data atual para carregar apenas dados do dia
     const hoje = new Date();
     const dataFormatada = hoje.toISOString().split('T')[0]; // Formato YYYY-MM-DD
     
-    // Carrega inspeções
-    const resInspecoes = await fetch(`/api/inspections?date=${dataFormatada}`);
+    // Função de segurança para requisições
+    const fetchComSeguranca = async (url) => {
+      try {
+        // Competição entre a requisição e o timeout
+        return await Promise.race([
+          fetch(url),
+          timeoutPromise
+        ]);
+      } catch (err) {
+        console.warn(`Erro na requisição para ${url}:`, err);
+        return { ok: false };
+      }
+    };
+    
+    // Carrega inspeções com tratamento de erro
+    const resInspecoes = await fetchComSeguranca(`/api/inspections?date=${dataFormatada}`);
     if (resInspecoes.ok) {
       estado.inspecoes = await resInspecoes.json();
       console.log('Inspeções carregadas com sucesso da API');
     }
     
-    // Carrega depósitos
-    const resDepositos = await fetch(`/api/deposits?date=${dataFormatada}`);
+    // Carrega depósitos com tratamento de erro
+    const resDepositos = await fetchComSeguranca(`/api/deposits?date=${dataFormatada}`);
     if (resDepositos.ok) {
       estado.depositos = await resDepositos.json();
       console.log('Depósitos carregados com sucesso da API');
     }
     
-    // Carrega despesas
-    const resDespesas = await fetch(`/api/expenses?date=${dataFormatada}`);
+    // Carrega despesas com tratamento de erro
+    const resDespesas = await fetchComSeguranca(`/api/expenses?date=${dataFormatada}`);
     if (resDespesas.ok) {
       estado.despesas = await resDespesas.json();
       console.log('Despesas carregadas com sucesso da API');
@@ -52,7 +71,13 @@ async function carregarDados() {
     if (dadosSalvos) {
       estado = JSON.parse(dadosSalvos);
       showToast('Usando dados em cache (modo offline)', 'warning');
+    } else {
+      showToast('Não foi possível carregar dados do servidor', 'error');
     }
+    
+    // Garantir que a interface seja atualizada mesmo em caso de erro
+    atualizarTabelas();
+    atualizarDashboard();
   }
 }
 

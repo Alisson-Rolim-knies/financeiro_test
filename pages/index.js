@@ -1,48 +1,66 @@
-import { useEffect } from 'react';
-import Head from 'next/head';
 import fs from 'fs';
 import path from 'path';
 
-// Esta função apenas serve o arquivo HTML diretamente
 export default function Home({ htmlContent }) {
-  useEffect(() => {
-    // Script para injetar o HTML diretamente na página
-    const root = document.getElementById('app-root');
-    if (root) {
-      root.innerHTML = htmlContent;
-    }
-
-    // Executar scripts que possam estar no HTML
-    const scripts = Array.from(document.querySelectorAll('script'));
-    scripts.forEach(oldScript => {
-      const newScript = document.createElement('script');
-      Array.from(oldScript.attributes).forEach(attr => {
-        newScript.setAttribute(attr.name, attr.value);
-      });
-      newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-      oldScript.parentNode.replaceChild(newScript, oldScript);
-    });
-  }, [htmlContent]);
-
   return (
-    <>
-      <Head>
-        <title>VisioCar - Sistema de Gerenciamento de Vistorias</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-      <div id="app-root"></div>
-    </>
+    <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
   );
 }
 
-// Obter o conteúdo HTML do arquivo estático
 export async function getStaticProps() {
-  const htmlPath = path.join(process.cwd(), 'attached_assets', 'index.html');
-  const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+  let htmlContent = '';
   
+  try {
+    // Tenta ler o arquivo HTML da pasta attached_assets para servi-lo como conteúdo estático
+    const htmlPath = path.join(process.cwd(), 'attached_assets', 'index.html');
+    htmlContent = fs.readFileSync(htmlPath, 'utf8');
+    
+    // Adiciona tratamento de erros assíncronos diretamente no HTML
+    htmlContent = htmlContent.replace(
+      '</head>',
+      `
+      <!-- Script de tratamento de erros assíncronos para Vercel -->
+      <script>
+        window.addEventListener('unhandledrejection', function(event) {
+          console.warn('Promessa não tratada foi rejeitada:', event.reason);
+          event.preventDefault();
+        });
+        
+        // Garantir que todas as operações assíncronas tenham timeout
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+          const controller = new AbortController();
+          const { signal } = controller;
+          
+          // Se já houver um signal na requisição, respeitá-lo
+          const hasSignal = args[1] && args[1].signal;
+          if (!hasSignal && args[1]) {
+            args[1].signal = signal;
+          } else if (!args[1]) {
+            args[1] = { signal };
+          }
+          
+          // Configurar timeout de 15 segundos
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          
+          // Fazer a requisição e limpar o timeout quando terminar
+          return originalFetch.apply(this, args)
+            .finally(() => clearTimeout(timeoutId));
+        };
+      </script>
+      </head>`
+    );
+
+  } catch (error) {
+    console.error('Erro ao ler arquivo HTML:', error);
+    htmlContent = '<h1>Erro ao carregar o aplicativo VisioCar</h1><p>Por favor, tente novamente mais tarde.</p>';
+  }
+
   return {
     props: {
       htmlContent,
     },
+    // Revalidar a cada hora para garantir conteúdo atualizado
+    revalidate: 3600,
   };
 }

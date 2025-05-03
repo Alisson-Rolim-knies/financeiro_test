@@ -1,6 +1,6 @@
 # Guia para Deploy do VisioCar na Vercel
 
-Este guia explica como realizar o deploy do VisioCar na plataforma Vercel.
+Este guia explica como realizar o deploy do VisioCar na plataforma Vercel e resolver problemas de comunicação assíncrona.
 
 ## Pré-requisitos
 
@@ -13,9 +13,11 @@ Este guia explica como realizar o deploy do VisioCar na plataforma Vercel.
 ### 1. Preparar o código para deploy (já feito)
 
 Os arquivos necessários já foram criados:
-- `vercel.json` - Configuração da Vercel
-- `/api/*.js` - Funções serverless para a API
-- `.env.example` - Exemplo de variáveis de ambiente
+- `vercel.json` - Configuração da Vercel com tratamento para erros assíncronos
+- `/api/*.js` - Funções serverless para a API com timeout e tratamento de erros
+- `pages/index.js` - Ponto de entrada para o Next.js
+- `vercel-build.sh` - Script para preparar o ambiente durante o deploy
+- `public/vercel-compat.js` - Script para corrigir problemas de comunicação assíncrona
 
 ### 2. Subir o código para um repositório Git
 
@@ -91,6 +93,34 @@ Se encontrar problemas com o deploy, verifique:
 2. Certifique-se de que as variáveis de ambiente estão configuradas corretamente
 3. Verifique se o banco de dados PostgreSQL permite conexões da Vercel (geralmente precisa permitir conexões de qualquer IP)
 
+### Erros de Comunicação Assíncrona
+
+Se você ver o erro "A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received", tente o seguinte:
+
+1. **Redeploye o projeto**:
+   - Vá para o dashboard da Vercel
+   - Selecione seu projeto
+   - Clique em "Redeploy" ou "Redeploy with existing build cache"
+
+2. **Verifique se os scripts de compatibilidade foram carregados**:
+   - Acesse a URL do seu site
+   - Abra as ferramentas de desenvolvedor (F12)
+   - No console, procure por "Script de compatibilidade Vercel inicializado"
+
+3. **Atualize o CORS na Vercel**:
+   - Vá para "Settings > Functions"
+   - Certifique-se de que o CORS está configurado para permitir requisições do seu domínio
+
 ## Suporte
 
 Para obter ajuda com o deploy, consulte a [documentação da Vercel](https://vercel.com/docs) ou entre em contato com o suporte.
+
+## Correções Aplicadas para Erros Assíncronos
+
+Esta versão do projeto inclui as seguintes melhorias para resolver problemas de comunicação assíncrona na Vercel:
+
+1. **Timeout para requisições fetch** - Todas as chamadas fetch agora têm um timeout definido
+2. **Tratamento de promessas não resolvidas** - Event listener para `unhandledrejection` adicionado
+3. **CORS configurado corretamente** - Headers adequados para permitir comunicação cross-origin
+4. **Configuração de Vercel melhorada** - Ajustes no arquivo vercel.json para melhorar a estabilidade
+5. **Middleware para resolver erros de timeout** - API agora tem melhor gerenciamento de conexões

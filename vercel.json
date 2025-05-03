@@ -3,39 +3,93 @@
   "framework": "nextjs",
   "functions": {
     "api/*.js": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
     }
   },
   "routes": [
+    { 
+      "src": "/vercel-compat.js",
+      "dest": "/public/vercel-compat.js",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      }
+    },
     {
       "src": "/api/status",
-      "dest": "/api/status.js"
+      "dest": "/api/status.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
     },
     {
       "src": "/api/inspections(.*)",
-      "dest": "/api/visiocar.js"
+      "dest": "/api/visiocar.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Connection": "keep-alive"
+      }
     },
     {
       "src": "/api/deposits(.*)",
-      "dest": "/api/visiocar.js"
+      "dest": "/api/visiocar.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Connection": "keep-alive"
+      }
     },
     {
       "src": "/api/expenses(.*)",
-      "dest": "/api/visiocar.js"
+      "dest": "/api/visiocar.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Connection": "keep-alive"
+      }
     },
     {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/attached_assets/index.html"
+      "dest": "/"
     }
   ],
   "env": {
     "NODE_ENV": "production"
   },
-  "buildCommand": "echo \"Skipping build\"",
-  "installCommand": "echo \"Skipping install\"",
-  "outputDirectory": "attached_assets",
-  "public": true
+  "buildCommand": "chmod +x ./vercel-build.sh && ./vercel-build.sh",
+  "installCommand": "npm install --omit=dev",
+  "outputDirectory": "public",
+  "public": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
 }
